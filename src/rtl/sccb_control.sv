@@ -22,14 +22,12 @@
 
 module sccb_control(
         //clock!, sda, scl inputs, outputs as well. 
-        input logic xclk,
-        
-
+        input logic clk,
         input logic start_fsm,
         input logic reset,
 
         inout wire  sda,
-        output wire scl
+        output logic scl
     );
 
     
@@ -45,23 +43,34 @@ module sccb_control(
     logic [7:0] reg_addr;
     logic [7:0] reg_data;
     
-    
-    
-    
     //BASED ON ROM FORMAT
     assign reg_addr = dout[15:8];
     assign reg_data = dout[7:0];
 
-
     //HARD CODED ADDR 0x42 TO WRITE TO
     logic [7:0] addr_42;
-    assign addr_42 = 8'h42;
+    assign addr_42 = 8'h42; 
 
     //COUNTERS
-    logic [6:0] rom_addr_counter;
-    logic [1:0] write_byte_counter;
-    logic [2:0] write_bit_counter;
-    logic [1:0] write_phase_counter;
+    logic [6:0] rom_addr_counter, rom_addr_counter_next;
+    logic [1:0] write_byte_counter, write_byte_counter_next;
+    logic [2:0] write_bit_counter, write_bit_counter_next;
+    logic [1:0] write_phase_counter, write_phase_counter_next;
+
+    //PRESET ROM
+    OV7670_config_rom camera_rom(
+        .clk(clk),
+        .addr(rom_addr_counter),
+        .dout(dout)
+    );
+
+
+    //OPEN DRAIN SETUP
+    logic sda_drive_low;    
+    wire  sda_in;           
+
+    assign sda   = sda_drive_low ? 1'b0 : 1'bz; 
+    assign sda_in = sda;                         
 
 
     always_comb
@@ -69,57 +78,80 @@ module sccb_control(
 
         next_state = s_idle;
         
-        //initalize counters
-        rom_addr_counter = 7'd0;
-        write_byte_counter = 2'd0;
-        write_bit_counter = 3'd7;
-        write_phase_counter = 2'd0;
+        //INITIALIZE COUNTERS
+        rom_addr_counter_next = rom_addr_counter;
+        write_byte_counter_next = write_byte_counter;
+        write_bit_counter_next = write_bit_counter;
+        write_phase_counter_next = write_phase_counter;
 
         scl = 1'bz;
-        sda = 1'bz;
+        sda_drive_low = 1'b0;
 
-        //state descriptions
+        //STATE DESCRIPTIONS AND ACTIONS 
         unique case(curr_state)
             s_start:
             begin
                 scl = 1'bz;
-                sda = 1'b0;
+                sda_drive_low = 1'b1;
             end
             s_stop:
             begin
                 scl = 1'bz;
-                sda = 1'bz;
-                rom_addr_counter = rom_addr_counter + 7'd1;
-                write_byte_counter = 2'd0;
+                sda_drive_low = 1'b0;
+                rom_addr_counter_next = rom_addr_counter + 7'd1;
+                write_byte_counter_next = 2'd0;
             end
             s_ack:
-                write_bit_counter = 3'd7;
-                write_byte_counter = write_byte_counter + 2'd1;
+            begin
+                case(write_phase_counter)
+                    2'd0:
+                    begin
+                        scl = 1'b0;
+                        write_phase_counter_next = write_phase_counter + 2'd1;
+                    end
+                    2'd1:
+                    begin
+                        sda_drive_low = 1'b0;
+                        write_phase_counter_next = write_phase_counter + 2'd1;
+                    end
+                    2'd2:
+                    begin
+                        scl = 1'bz;
+                        write_phase_counter_next = 2'b0;
+                        write_bit_counter_next = 3'd7;
+                        write_byte_counter_next = write_byte_counter + 2'd1;
+                    end
+                    default:
+                        scl = 1'bz;
+                endcase
+            end
             s_write:
             begin
                 case(write_phase_counter)
                     2'd0:
                     begin
                         scl = 1'b0;
-                        write_phase_counter = write_phase_counter + 2'd1;
+                        write_phase_counter_next = write_phase_counter + 2'd1;
                     end
                     2'd1:
+                    begin
                         case (write_byte_counter)
                             2'd0:
-                                sda = addr_42[write_bit_counter];
+                                sda_drive_low = ~addr_42[write_bit_counter];
                             2'd1:
-                                sda = reg_addr[write_bit_counter];
+                                sda_drive_low = ~reg_addr[write_bit_counter];
                             2'd2:
-                                sda = reg_data[write_bit_counter];
+                                sda_drive_low = ~reg_data[write_bit_counter];
                             default: 
-                                sda = addr_42[write_bit_counter];
+                                sda_drive_low = ~addr_42[write_bit_counter];
                         endcase
-                        write_phase_counter = write_phase_counter + 2'd1;
+                        write_phase_counter_next = write_phase_counter + 2'd1;
+                    end
                     2'd2:
                     begin
                         scl = 1'bz;
-                        write_phase_counter = 2'b0;
-                        write_bit_counter = write_bit_counter - 3'd1;
+                        write_phase_counter_next = 2'b0;
+                        write_bit_counter_next = write_bit_counter - 3'd1;
                     end
                     default:
                         scl = 1'bz;
@@ -128,38 +160,54 @@ module sccb_control(
             s_idle:
             begin
                 scl = 1'bz;
-                sda = 1'bz;
-                rom_addr_counter = 7'd0;
-                write_byte_counter = 2'd0;
+                sda_drive_low = 1'bz;
+                rom_addr_counter_next = 7'd0;
+                write_byte_counter_next = 2'd0;
+                write_bit_counter_next = 3'd7;
+                write_phase_counter_next = 2'd0;
             end        
         endcase
 
-
-        //transitions
+        //STATE TRANSITIONS
         case (curr_state)
             s_idle: 
                 next_state = start_fsm ? s_start : s_idle;
             s_start:
                 next_state = s_write;
             s_write:
-                next_state = (write_bit_counter == 3'd0 && write_phase_counter == 2'd0) ? s_ack : s_write;
+                next_state = (write_bit_counter == 3'd0 && write_phase_counter == 2'd2) ? s_ack : s_write;
             s_ack:
-                next_state = (write_byte_counter == 2'd2 || sda == 1'bz) ? s_stop : s_write;    //may need to use sda_in rather than directly sda for ACK/NACK
+            begin
+               if (write_byte_counter == 2'd2 && write_phase_counter == 2'd2) begin
+                next_state = s_stop;
+               end else if (write_byte_counter != 2'd2 && write_phase_counter == 2'd2) begin
+                next_state = s_write;
+               end else begin
+                next_state = s_ack;
+               end
+            end   
             s_stop:
-                next_state = (rom_addr_counter == 7'd72 || sda == 1'bz) ? s_idle : s_start;     //may need to use sda_in rather than directly sda for ACK/NACK
+                next_state = (rom_addr_counter == 7'd72) ? s_idle : s_start;     
 
         endcase
     end
 
-    always_ff @(posedge xclk)
+    //SEQUENTIAL LOGIC
+    always_ff @(posedge clk)
     begin
+        if (reset) begin
+        curr_state <= s_idle;
+        rom_addr_counter <= 7'd0;
+        write_byte_counter <= 2'd0;
+        write_bit_counter <= 3'd7;
+        write_phase_counter <= 2'd0;
+        end else begin
         curr_state <= next_state;
+        rom_addr_counter <= rom_addr_counter_next;
+        write_byte_counter <= write_byte_counter_next;
+        write_bit_counter <= write_bit_counter_next;
+        write_phase_counter <= write_phase_counter_next;
+        end
     end
-
-     OV7670_config_rom camera_rom(
-        .clk(clk),
-        .addr(rom_addr_counter),
-        .dout(dout)
-    )
 
 endmodule
