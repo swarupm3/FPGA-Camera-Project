@@ -52,7 +52,7 @@ module sccb_control(
     assign addr_42 = 8'h42; 
 
     //COUNTERS
-    logic [6:0] rom_addr_counter, rom_addr_counter_next;
+    logic [7:0] rom_addr_counter, rom_addr_counter_next;
     logic [1:0] write_byte_counter, write_byte_counter_next;
     logic [2:0] write_bit_counter, write_bit_counter_next;
     logic [1:0] write_phase_counter, write_phase_counter_next;
@@ -69,7 +69,7 @@ module sccb_control(
     logic sda_drive_low;    
     wire  sda_in;           
 
-    assign sda   = sda_drive_low ? 1'b0 : 1'bz; 
+    assign sda = sda_drive_low ? 1'b0 : 1'bz; 
     assign sda_in = sda;                         
 
 
@@ -98,7 +98,7 @@ module sccb_control(
             begin
                 scl = 1'bz;
                 sda_drive_low = 1'b0;
-                rom_addr_counter_next = rom_addr_counter + 7'd1;
+                rom_addr_counter_next = rom_addr_counter + 8'd1;
                 write_byte_counter_next = 2'd0;
             end
             s_ack:
@@ -161,7 +161,7 @@ module sccb_control(
             begin
                 scl = 1'bz;
                 sda_drive_low = 1'bz;
-                rom_addr_counter_next = 7'd0;
+                rom_addr_counter_next = 8'd0;
                 write_byte_counter_next = 2'd0;
                 write_bit_counter_next = 3'd7;
                 write_phase_counter_next = 2'd0;
@@ -187,7 +187,7 @@ module sccb_control(
                end
             end   
             s_stop:
-                next_state = (rom_addr_counter == 7'd72) ? s_idle : s_start;     
+                next_state = (rom_addr_counter == 8'd72) ? s_idle : s_start;     
 
         endcase
     end
@@ -197,7 +197,7 @@ module sccb_control(
     begin
         if (reset) begin
         curr_state <= s_idle;
-        rom_addr_counter <= 7'd0;
+        rom_addr_counter <= 8'd0;
         write_byte_counter <= 2'd0;
         write_bit_counter <= 3'd7;
         write_phase_counter <= 2'd0;
