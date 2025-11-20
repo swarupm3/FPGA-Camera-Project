@@ -21,34 +21,45 @@
 
 
 module camera_top_level(
-
+        input clk,
+        input reset,
+        
+        //HDMI
+        output logic hdmi_tmds_clk_n,
+        output logic hdmi_tmds_clk_p,
+        output logic [2:0]hdmi_tmds_data_n,
+        output logic [2:0]hdmi_tmds_data_p
+        
     );
     
     
 
     
-    logic clk_24MHz, clk_25MHz, clk, clk_100MHz;
+    logic xclk, vga_clk, clk_125MHz;
     logic locked;
     logic [3:0] red, green, blue;
     logic [9:0] drawX, drawY;
     logic hsync, vsync, vde;
     logic reset_ah;
-
+    wire  sda;
+    logic scl;
+   
     
     
         
     //clock wizard configured with a 1x and 5x clock for HDMI
     clk_wiz_0 clk_wiz (
-        .clk_out1(clk_24MHz),
-        .clk_out2(clk_25MHz),
+        .clk_out1(xclk),
+        .clk_out2(vga_clk),
+        .clk_out3(clk_125MHz),
         .reset(reset_ah),
         .locked(locked),
-        .clk_in1(clk_100Mhz)
+        .clk_in1(clk)
     );
     
     //VGA Sync signal generator
     vga_controller vga (
-        .pixel_clk(clk_25MHz),
+        .pixel_clk(vga_clk),
         .reset(reset_ah),
         .hs(hsync),
         .vs(vsync),
@@ -84,7 +95,30 @@ module camera_top_level(
         .TMDS_DATA_P(hdmi_tmds_data_p),         
         .TMDS_DATA_N(hdmi_tmds_data_n)          
     );
-
+    
+    blk_mem_gen_0 bram(
+        .clka(xclk), //AXI
+        .addra(addra),
+        .dina(dina),
+        .douta(douta),
+        .ena(ena),
+        .wea(wea),
+        
+        .clkb(vga_clk), //COLORMAPPER
+        .addrb(addrb),
+        .dinb(32'b0),
+        .doutb(doutb),
+        .enb(1'b1),
+        .web(4'b0)
+    );
+    
+    sccb_control control_unit (
+        .clk(xclk),
+        .start_fsm(start_fsm),
+        .reset(reset),
+        .sda(sda),
+        .scl(scl)
+    );
 
     
 endmodule

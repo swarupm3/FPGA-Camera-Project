@@ -29,7 +29,7 @@ module testbench(); //even though the testbench doesn't create any hardware, it 
     repeat (10) @(posedge clk);
     reset = 1'b0;         
     
-    // wait a bit
+
     repeat (50) @(posedge clk);
     
    
