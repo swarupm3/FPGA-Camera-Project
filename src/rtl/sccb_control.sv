@@ -22,12 +22,13 @@
 
 module sccb_control(
         //clock!, sda, scl inputs, outputs as well. 
-        input logic clk,
+        input logic xclk,
         input logic start_fsm,
         input logic reset,
 
         inout wire  sda,
-        output logic scl
+        output logic scl,
+        output logic write_flag
     );
 
     
@@ -65,20 +66,25 @@ module sccb_control(
 
     //PRESET ROM
     OV7670_config_rom camera_rom(
-        .clk(clk),
+        .clk(xclk),
         .addr(rom_addr_counter),
         .dout(dout)
     );
 
 
     //OPEN DRAIN SETUP
+    
+    
     logic sda_drive_low;    
     wire  sda_in;           
-
-    assign sda = sda_drive_low ? 1'b0 : 1'bz; 
+    
+    assign sda = (sda_drive_low && ~write_flag) ? 1'b0 : 1'bz; 
     assign sda_in = sda;                         
 
-
+    
+    
+    
+    
     always_comb
     begin
 
@@ -89,6 +95,9 @@ module sccb_control(
         write_byte_counter_next = write_byte_counter;
         write_bit_counter_next = write_bit_counter;
         write_phase_counter_next = write_phase_counter;
+        
+        
+        
 
 //        scl = 1'bz;
 //        sda_drive_low = 1'b0;
@@ -113,18 +122,19 @@ module sccb_control(
                     2'd0:
                     begin
                         scl = 1'b0;
+                        sda_drive_low = 1'b1;
                         write_phase_counter_next = write_phase_counter + 2'd1;
                     end
                     2'd1:
                     begin
-//                        scl = 1'b0;
+//                        scl = 1'bz;
                         sda_drive_low = 1'b0;
                         write_phase_counter_next = write_phase_counter + 2'd1;
                     end
                     2'd2:
                     begin
                         scl = 1'bz;
-                        sda_drive_low = 1'b1;
+                        //sda_drive_low = 1'b1;
                         write_phase_counter_next = 2'b0;
                         write_bit_counter_next = 3'd7;
                         write_byte_counter_next = write_byte_counter + 2'd1;
@@ -169,11 +179,12 @@ module sccb_control(
             s_idle:
             begin
                 scl = 1'bz;
-                sda_drive_low = 1'b1;
+                sda_drive_low = 1'b1; // changed to make this hiZ, for tb
                 rom_addr_counter_next = 8'd0;
                 write_byte_counter_next = 2'd0;
                 write_bit_counter_next = 3'd7;
                 write_phase_counter_next = 2'd0;
+              
             end        
         endcase
 
@@ -187,22 +198,26 @@ module sccb_control(
                 next_state = (write_bit_counter == 3'd0 && write_phase_counter == 2'd2) ? s_ack : s_write;
             s_ack:
             begin
-               if (write_byte_counter == 2'd2 && write_phase_counter == 2'd2) begin
+               if (write_byte_counter == 2'd2 && write_phase_counter == 2'd2 ) begin
                 next_state = s_stop;
-               end else if (write_byte_counter != 2'd2 && write_phase_counter == 2'd2) begin
+               end else if (write_byte_counter != 2'd2 && write_phase_counter == 2'd2 ) begin
                 next_state = s_write;
                end else begin
                 next_state = s_ack;
                end
             end   
-            s_stop:
-                next_state = (rom_addr_counter == 8'd72) ? s_idle : s_start;     
+            s_stop: begin
+                next_state = (rom_addr_counter == 8'd72) ? s_idle : s_start;  
+//                if (rom_addr_counter == 8'd72) begin
+//                    write_flag = 1'b1;
+//                end 
+            end  
 
         endcase
     end
 
     //SEQUENTIAL LOGIC
-    always_ff @(posedge clk)
+    always_ff @(posedge xclk)
     begin
         if (reset) begin
         curr_state <= s_idle;
@@ -211,6 +226,9 @@ module sccb_control(
         write_bit_counter <= 3'd7;
         write_phase_counter <= 2'd0;
         scl_div_cnt <= '0;
+        write_flag <= 1'b0;
+        
+        
         end else begin
         if (scl_div_cnt == SCL_DIV-1) begin   
         scl_div_cnt <= '0;        
@@ -219,9 +237,15 @@ module sccb_control(
         write_byte_counter <= write_byte_counter_next;
         write_bit_counter <= write_bit_counter_next;
         write_phase_counter <= write_phase_counter_next;
+        
+
+        
         end else begin
             scl_div_cnt  <= scl_div_cnt + 1'b1;
         end
+        end
+        if ((scl_div_cnt == SCL_DIV-1) && (curr_state == s_stop) && (rom_addr_counter == 8'd72))begin
+            write_flag <=1'b1;
         end
     end
 
