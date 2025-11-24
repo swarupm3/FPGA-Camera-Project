@@ -38,7 +38,7 @@ module cam_capture(
         s_idle,
         s_write,
         s_end_row,
-        s_end_frame,
+        s_end_frame
     } curr_state, next_state;
 
 
