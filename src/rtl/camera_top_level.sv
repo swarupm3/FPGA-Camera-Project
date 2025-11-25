@@ -52,21 +52,19 @@ module camera_top_level(
     
     logic vga_clk, clk_125MHz;
     logic locked;
-    logic [3:0] red, green, blue;
     logic [9:0] drawX, drawY, x_coord, y_coord;
     logic [18:0] cam_pixel_idx, vga_pixel_idx;
     logic [7:0] pixel_data;
     logic hsync, vsync, vde;
-    logic reset_ah;
     logic config_done;
     logic start_fsm_debounced, reset_debounced;
-    wire  sda;
-    logic scl;
     logic [3:0] doutb;
+    logic [3:0] addra;
 
-    assign pwdn = 0'b0;
+    assign pwdn = 1'b0;
     assign cam_pixel_idx = y_coord * 640 + x_coord;
     assign vga_pixel_idx = drawY * 640 + drawX;
+    assign dina = cam_href ? pixel_data[7:4] : 4'b0;
 
     sync_debounce button_sync [1:0] (
 		.Clk  (clk),
@@ -125,11 +123,11 @@ module camera_top_level(
     );
     
     blk_mem_gen_0 bram(
-        .clka(pclk), //CAMERA
+        .clka(vga_clk), //CAMERA  pclk
         .addra(cam_pixel_idx),
-        .dina(pixel_data[7:4]),
+        .dina(dina), //dina
         .ena(1'b1),
-        .wea(1'b1),
+        .wea(cam_href & config_done),     //cam_href & config_done
         
         .clkb(vga_clk), //VGA
         .addrb(vga_pixel_idx),
@@ -139,7 +137,7 @@ module camera_top_level(
     
     sccb_control control_unit (
         .xclk(xclk),
-        .start_fsm(start_fsm),
+        .start_fsm(start_fsm_debounced),
         .reset(reset_debounced),
         .sda(sda),
         .scl(scl),
@@ -147,7 +145,7 @@ module camera_top_level(
     );
 
     cam_capture cam_capture_unit(
-        .pclk(pclk),
+        .pclk(vga_clk),
         .href(cam_href),
         .vsync(cam_vsync),
         .cam_data(cam_data),
