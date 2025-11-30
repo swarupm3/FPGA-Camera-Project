@@ -62,7 +62,7 @@ module camera_top_level(
     assign pwdn = 1'b0;
     assign cam_pixel_idx = y_coord * 640 + x_coord;
     assign vga_pixel_idx = drawY * 640 + drawX;
-    assign dina = cam_href ? pixel_data[7:4] : 4'b0000;
+    assign dina = pixel_data[7:4];
 
 //    sync_debounce button_sync [1:0] (
 //		.Clk  (clk),
@@ -125,7 +125,7 @@ module camera_top_level(
         .addra(cam_pixel_idx),
         .dina(dina), //dina
         .ena(1'b1),
-        .wea(config_done & cam_href),     //cam_href & config_done
+        .wea(config_done & cam_href & ~cam_vsync),     //cam_href & config_done
         
         .clkb(vga_clk), //VGA
         .addrb(vga_pixel_idx),
@@ -143,7 +143,7 @@ module camera_top_level(
     );
 
     cam_capture cam_capture_unit(
-        .pclk(vga_clk),
+        .pclk(pclk),
         .href(cam_href),
         .vsync(cam_vsync),
         .cam_data(cam_data),
