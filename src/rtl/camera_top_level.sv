@@ -56,13 +56,14 @@ module camera_top_level(
     logic hsync, vsync, vde;
     logic config_done;
 //    logic start_fsm_debounced, reset_debounced;
-    logic [3:0] doutb;
-    logic [3:0] dina;
+    logic [6:0] doutb;
+    logic [6:0] dina;
 
     assign pwdn = 1'b0;
     assign cam_pixel_idx = y_coord * 640 + x_coord;
     assign vga_pixel_idx = drawY * 640 + drawX;
-    assign dina = pixel_data[7:4];
+    assign dina = pixel_data[7:1];
+    
 
 //    sync_debounce button_sync [1:0] (
 //		.Clk  (clk),
