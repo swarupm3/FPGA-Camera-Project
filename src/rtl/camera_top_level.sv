@@ -53,6 +53,7 @@ module camera_top_level(
     logic [9:0] drawX, drawY, x_coord, y_coord;
     logic [18:0] cam_pixel_idx, vga_pixel_idx;
     logic [7:0] pixel_data;
+    logic pixel_valid;
     logic hsync, vsync, vde;
     logic config_done;
 //    logic start_fsm_debounced, reset_debounced;
@@ -126,7 +127,7 @@ module camera_top_level(
         .addra(cam_pixel_idx),
         .dina(dina), //dina
         .ena(1'b1),
-        .wea(config_done & cam_href & ~cam_vsync),     //cam_href & config_done
+        .wea(pixel_valid),     //cam_href & config_done
         
         .clkb(vga_clk), //VGA
         .addrb(vga_pixel_idx),
@@ -153,7 +154,8 @@ module camera_top_level(
 
         .x_coord(x_coord),
         .y_coord(y_coord),
-        .pixel_data(pixel_data)
+        .pixel_data(pixel_data),
+        .pixel_valid(pixel_valid)
     );
 
     
