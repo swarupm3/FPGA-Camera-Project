@@ -74,39 +74,16 @@ module camera_top_level(
     assign vga_pixel_idx = drawY * 640 + drawX;
     assign dina = pixel_data[7:1];
     
-//    assign min_x = 10'd160;
-//    assign max_x = 10'd480;
-//    assign min_y = 10'd120;
-//    assign max_y = 10'd360;
+//    assign min_x_new = 10'd641;
+//    assign max_x_new = 10'd480;
+//    assign min_y_new = 10'd641;
+//    assign max_y_new = 10'd0;
     
     logic [6:0] red_block, dout_red;
     logic frame_ack_pclk;
-    always_comb begin
-        if (drawY == min_y_new && drawX <= max_x_new && drawX >= min_x_new) begin
-            red_block = 7'b0; 
-            dout_red = 7'b1111111;
-        end 
-        else if (drawY == max_y_new && drawX <= max_x_new && drawX >= min_x_new) begin
-            red_block = 7'b0; 
-            dout_red = 7'b1111111;
-        end
-        else if (drawX == min_x_new && drawY <= max_y_new && drawY >= min_y_new) begin
-            red_block = 7'b0; 
-            dout_red = 7'b1111111;            
-        end
-        else if (drawX == max_x_new && drawY <= max_y_new && drawY >= min_y_new) begin
-            red_block = 7'b0; 
-            dout_red = 7'b1111111;            
-        end
-        else begin
-            red_block = 7'b1111111;
-            dout_red = 7'b0;
-        end       
-    end
     
     
-    
-    
+        
     clk_wiz_0 clk_wiz (
         .clk_out1(xclk),
         .clk_out2(vga_clk),
@@ -218,22 +195,8 @@ module camera_top_level(
     
     // sampled (clk-domain) copies of pclk min/max
     logic [9:0] sampled_min_x, sampled_min_y, sampled_max_x, sampled_max_y;
+    logic [6:0] delay_max_x;
     
-    // connect endframe input (already named endframe from instantiation)
-    assign endframe_pclk = endframe;
-    
-    
-    always_ff @(posedge clk) begin
-        if (reset) begin
-            endframe_sync0 <= 1'b0;
-            endframe_sync1 <= 1'b0;
-            endframe_sync_prev <= 1'b0;
-        end
-        else begin
-            endframe_sync0 <= endframe_pclk;
-            endframe_sync1 <= endframe_sync0;
-        end
-    end
     // Edge detect in clk domain and latch pclk-side coordinates (which are held stable by cam_capture_UV)
     always_ff @(posedge clk or posedge reset) begin
         if (reset) begin
@@ -242,30 +205,27 @@ module camera_top_level(
             sampled_max_x <= 10'd0;
             sampled_max_y <= 10'd641;
             frame_ack_clk <= 1'b0;
+            delay_max_x <= 7'b0;
             endframe_sync_prev <= 1'b0;
         end else begin
-            if (endframe_sync1 && ~endframe_sync_prev) begin
+            //if (endframe_sync1 && ~endframe_sync_prev) begin
+            if (vsync && delay_max_x == 7'h8F) begin
                 // latch the pclk values (they are stable during endframe)
                 sampled_min_x <= min_x;
                 sampled_min_y <= min_y;
                 sampled_max_x <= max_x;
                 sampled_max_y <= max_y;
                 frame_ack_clk <= 1'b1; // single-cycle ack
-            end else begin
+                delay_max_x <= 7'b0;
+            end 
+            else if (vsync && delay_max_x != 7'h8F) begin
+                delay_max_x <= delay_max_x + 4'b1;
+            end
+            
+            else begin
                 frame_ack_clk <= 1'b0;
             end
             endframe_sync_prev <= endframe_sync1;
-        end
-    end
-
-    // send ack back to pclk domain (two-flop sync)
-    always_ff @(posedge pclk or posedge reset) begin
-        if (reset) begin
-            frame_ack_pclk_sync0 <= 1'b0;
-            frame_ack_pclk <= 1'b0;
-        end else begin
-            frame_ack_pclk_sync0 <= frame_ack_clk;
-            frame_ack_pclk <= frame_ack_pclk_sync0;
         end
     end
 
@@ -277,7 +237,7 @@ module camera_top_level(
             min_x_new <= 10'd641;
             min_y_new <= 10'd641;
         end else begin
-            if (sampled_min_x != 10'd641 && sampled_min_y != 10'd641) begin
+            if (sampled_min_x != 10'd641 && sampled_min_y != 10'd641) begin //maybe add a counter here?
                 max_x_new <= sampled_max_x;
                 max_y_new <= sampled_max_y;
                 min_x_new <= sampled_min_x;
@@ -291,10 +251,35 @@ module camera_top_level(
         end
     end
     
+        always_comb begin
+        if (drawY == min_y_new && drawX <= max_x_new && drawX >= min_x_new) begin
+            red_block = 7'b0; 
+            dout_red = 7'b1111111;
+        end 
+        else if (drawY == max_y_new && drawX <= max_x_new && drawX >= min_x_new) begin
+            red_block = 7'b0; 
+            dout_red = 7'b1111111;
+        end
+        else if (drawX == min_x_new && drawY <= max_y_new && drawY >= min_y_new) begin
+            red_block = 7'b0; 
+            dout_red = 7'b1111111;            
+        end
+        else if (drawX == max_x_new && drawY <= max_y_new && drawY >= min_y_new) begin
+            red_block = 7'b0; 
+            dout_red = 7'b1111111;            
+        end
+        else begin
+            red_block = 7'b1111111;
+            dout_red = 7'b0;
+        end       
+    end
+
+    
+    
     hex_driver debug_max_x( // LEFT
         .clk(clk),
         .reset(reset),
-        .in({4'b1111,{2'b0, max_x[9:8]},max_x[7:4], max_x[3:0]}),
+        .in({4'b1111,{2'b0, sampled_max_x[9:8]},sampled_max_x[7:4], sampled_max_x[3:0]}),
         .hex_seg(hex_seg_a),
         .hex_grid(hex_grid_a)
     );
@@ -302,7 +287,7 @@ module camera_top_level(
     hex_driver debug_max_y( //RIGHT
         .clk(clk),
         .reset(reset),
-        .in({4'b0, {2'b0,min_x[9:8]},min_x[7:4], min_x[3:0]}),
+        .in({4'b0, {2'b0,sampled_min_x[9:8]},sampled_min_x[7:4], sampled_min_x[3:0]}),
         .hex_seg(hex_seg_b),
         .hex_grid(hex_grid_b)
     );
