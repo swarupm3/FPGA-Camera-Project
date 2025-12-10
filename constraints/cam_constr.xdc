@@ -13,7 +13,8 @@ set_property -dict { PACKAGE_PIN J14 IOSTANDARD LVCMOS33 } [get_ports sda]
 set_property -dict { PACKAGE_PIN E14 IOSTANDARD LVCMOS33 } [get_ports xclk]
 set_property -dict { PACKAGE_PIN E15 IOSTANDARD LVCMOS33 } [get_ports cam_href]
 
-
+set_property -dict { PACKAGE_PIN H2 IOSTANDARD LVCMOS33 } [get_ports toggle_edge]
+set_property -dict { PACKAGE_PIN G2 IOSTANDARD LVCMOS33 } [get_ports toggle_skin]
 
 
 
@@ -93,3 +94,23 @@ set_property PACKAGE_PIN E4 [get_ports {hex_grid_b[0]}]
 set_property PACKAGE_PIN E3 [get_ports {hex_grid_b[1]}]
 set_property PACKAGE_PIN F5 [get_ports {hex_grid_b[2]}]
 set_property PACKAGE_PIN H5 [get_ports {hex_grid_b[3]}]
+
+
+set_property -dict {PACKAGE_PIN G1 IOSTANDARD LVCMOS33} [get_ports {sw_i[0]}]
+set_property -dict {PACKAGE_PIN F2 IOSTANDARD LVCMOS33} [get_ports {sw_i[1]}]
+set_property -dict {PACKAGE_PIN F1 IOSTANDARD LVCMOS33} [get_ports {sw_i[2]}]
+set_property -dict {PACKAGE_PIN E2 IOSTANDARD LVCMOS33} [get_ports {sw_i[3]}]
+set_property -dict {PACKAGE_PIN E1 IOSTANDARD LVCMOS33} [get_ports {sw_i[4]}]
+set_property -dict {PACKAGE_PIN D2 IOSTANDARD LVCMOS33} [get_ports {sw_i[5]}]
+set_property -dict {PACKAGE_PIN D1 IOSTANDARD LVCMOS33} [get_ports {sw_i[6]}]
+
+set_property -dict {PACKAGE_PIN C2 IOSTANDARD LVCMOS33} [get_ports {sw_i[7]}]
+set_property -dict {PACKAGE_PIN B2 IOSTANDARD LVCMOS33} [get_ports {sw_i[8]}]
+set_property -dict {PACKAGE_PIN A4 IOSTANDARD LVCMOS33} [get_ports {sw_i[9]}]
+set_property -dict {PACKAGE_PIN A5 IOSTANDARD LVCMOS33} [get_ports {sw_i[10]}]
+set_property -dict {PACKAGE_PIN A6 IOSTANDARD LVCMOS33} [get_ports {sw_i[11]}]
+set_property -dict {PACKAGE_PIN C7 IOSTANDARD LVCMOS33} [get_ports {sw_i[12]}]
+set_property -dict {PACKAGE_PIN A7 IOSTANDARD LVCMOS33} [get_ports {sw_i[13]}]
+set_property -dict {PACKAGE_PIN B7 IOSTANDARD LVCMOS33} [get_ports {sw_i[14]}]
+set_property -dict {PACKAGE_PIN A8 IOSTANDARD LVCMOS33} [get_ports {sw_i[15]}]
+
