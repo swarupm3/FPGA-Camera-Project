@@ -117,10 +117,10 @@ Switches **0 through 14** combine to form a 15-bit threshold value used by the s
 
 This determines how strict or lenient the detector is:
 
-- **Lower threshold → stricter detection**  
-  - Fewer pixels qualify as skin  
-- **Higher threshold → more permissive**  
-  - More pixels qualify as skin  
+- **Lower threshold → more permissive**  
+  - Fewer pixels need to qualify as skin  
+- **Higher threshold → stricter detection**  
+  - More pixels need to qualify as skin  
 
 Threshold updates apply immediately on the next pixel clock.
 
@@ -133,10 +133,9 @@ The **leftmost button (mapped to pin H2)** controls the edge-detection mode in t
 - **Button H2 = 0** → Edge detection OFF  
 - **Button H2 = 1** → Edge detection ON  
 
-When enabled, the pipeline highlights edges by emphasizing rapid pixel-intensity changes.  
+When enabled, the pipeline highlights edges by emphasizing large pixel luminosity variations.  
 The effect updates immediately every pixel clock cycle, with no added frame delay.
 
-This control lets you visually inspect object boundaries and verify that the capture + processing pipeline is functioning correctly.
 
 
 

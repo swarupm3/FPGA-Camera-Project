@@ -31,12 +31,7 @@ module camera_top_level(
         input logic start_fsm,
         input logic pwdn,
         
-        
-        input logic toggle_edge,
-        input logic toggle_skin,
-        input  logic [15:0] sw_i,
-        
-        
+        //SKIN/EDGE TOGGLES
         input logic toggle_edge,
         input logic toggle_skin,
         input  logic [15:0] sw_i,
