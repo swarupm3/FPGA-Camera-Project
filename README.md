@@ -88,6 +88,7 @@ Rotation:
 - Clockwise → **increases brightness**  
 - Counter-clockwise → **decreases brightness**  
 
+---
 
 ### 4. Skin Detection Control (`sw[15:0]`)
 
