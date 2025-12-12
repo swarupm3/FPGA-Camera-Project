@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module sccb_control(
+module cam_init(
         //clock!, sda, scl inputs, outputs as well. 
         input logic xclk,
         input logic start_fsm,

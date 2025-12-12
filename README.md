@@ -20,11 +20,9 @@ This design receives pixel data from an **OV7670 CMOS camera**, configures the s
 
 Features include:
 
-- Custom I2C/SCCB configuration FSM  
-- Pixel capture synchronized to PCLK  
+- Custom I2C configuration FSM    
 - Dual-port BRAM frame buffering  
-- YUV422 color formatting with grayscale conversion using 21-bits of luminance
-- Real-time pixel processing pipeline  
+- YUV422 color formatting with grayscale conversion using 21-bits of luminance 
 - HDMI TMDS encoding (640×480 @ 60Hz) 
 - Brightness control using on-board potentiometer (XADC)  
 - Edge/skin detection toggles  
@@ -43,11 +41,6 @@ Features include:
 - 20x Jumper Wires
 - 2x 4.7 KOhm Resistors
 - Breadboard
-
----
-
-
-This produces a continuous, real-time video stream with only a few microseconds of latency.
 
 ---
 

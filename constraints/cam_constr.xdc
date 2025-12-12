@@ -1,3 +1,6 @@
+#Many PMOD ports copied from the following source: https://github.com/souvlakiboi/OV7670_camera/blob/main/sources/Urbana.xdc
+
+#CAMERAS
 set_property -dict { PACKAGE_PIN N15 IOSTANDARD LVCMOS33 } [get_ports clk]
 create_clock -period 10.000 -name clk [get_ports clk]
 
@@ -28,6 +31,7 @@ set_property -dict { PACKAGE_PIN K16 IOSTANDARD LVCMOS33 } [get_ports {cam_data[
 set_property -dict { PACKAGE_PIN J16 IOSTANDARD LVCMOS33 } [get_ports {cam_data[4]}]
 
 
+#HDMI
 set_property -dict { PACKAGE_PIN V17 IOSTANDARD TMDS_33 } [get_ports hdmi_tmds_clk_n]
 set_property -dict { PACKAGE_PIN U16 IOSTANDARD TMDS_33 } [get_ports hdmi_tmds_clk_p]
 
@@ -45,7 +49,7 @@ set_property BITSTREAM.Config.SPI_buswidth 4 [current_design]
 
 
 
-
+#HEX DISPLAY
 set_property IOSTANDARD LVCMOS33 [get_ports {hex_grid_a[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {hex_grid_a[2]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {hex_grid_a[1]}]
@@ -96,6 +100,7 @@ set_property PACKAGE_PIN F5 [get_ports {hex_grid_b[2]}]
 set_property PACKAGE_PIN H5 [get_ports {hex_grid_b[3]}]
 
 
+#SWITCHES
 set_property -dict {PACKAGE_PIN G1 IOSTANDARD LVCMOS33} [get_ports {sw_i[0]}]
 set_property -dict {PACKAGE_PIN F2 IOSTANDARD LVCMOS33} [get_ports {sw_i[1]}]
 set_property -dict {PACKAGE_PIN F1 IOSTANDARD LVCMOS33} [get_ports {sw_i[2]}]
@@ -114,8 +119,7 @@ set_property -dict {PACKAGE_PIN A7 IOSTANDARD LVCMOS33} [get_ports {sw_i[13]}]
 set_property -dict {PACKAGE_PIN B7 IOSTANDARD LVCMOS33} [get_ports {sw_i[14]}]
 set_property -dict {PACKAGE_PIN A8 IOSTANDARD LVCMOS33} [get_ports {sw_i[15]}]
 
-<<<<<<< HEAD
-=======
+#POTENTIOMETER
 set_property -dict {PACKAGE_PIN J10 IOSTANDARD LVCMOS12} [get_ports VP]
 set_property -dict {PACKAGE_PIN K9 IOSTANDARD LVCMOS12} [get_ports VN]
 
@@ -136,4 +140,3 @@ set_property PACKAGE_PIN E17 [get_ports {B_out[6]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {B_out[6]}]
 
 
->>>>>>> 1d234d5 (Brightness Dial)

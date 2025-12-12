@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module cam_capture_UV(
+module bounding_boxes(
         input logic pclk,
         input logic href,
         input logic vsync,

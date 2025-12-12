@@ -205,7 +205,7 @@ module camera_top_level(
         .enb(1'b1)
     );
     
-    sccb_control control_unit (
+    cam_init control_unit (
         .xclk(xclk),
         .start_fsm(start_fsm),
         .reset(reset),
@@ -230,7 +230,7 @@ module camera_top_level(
     );
 
     // updated instantiation - wire up all 12 region ports
-    cam_capture_UV find_x_y(
+    bounding_boxes find_x_y(
         .pclk(pclk),
         .href(cam_href),
         .vsync(cam_vsync),
@@ -737,4 +737,4 @@ module camera_top_level(
         .hex_grid(hex_grid_b)
     );
     
-
+endmodule
